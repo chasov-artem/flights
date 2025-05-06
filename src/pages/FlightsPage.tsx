@@ -1,63 +1,136 @@
 import { useEffect, useState } from "react";
-import {
-  Container,
-  Box,
-  Typography,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import { FlightCard } from "../components/FlightCard";
+import { useDispatch, useSelector } from "react-redux";
+import { Box, Typography, Grid, CircularProgress, Alert } from "@mui/material";
+import { fetchFlights } from "../redux/flightsSlice";
+import type { AppDispatch, RootState } from "../redux/store";
 import type { Flight } from "../types";
-import { flightsApi } from "../api/flightsApi";
+import { FlightCard } from "../components/FlightCard";
+import { FlightFilters } from "../components/FlightFilters";
 
-export const FlightsPage = () => {
-  const [flights, setFlights] = useState<Flight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const FlightsPage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { flights, loading, error } = useSelector(
+    (state: RootState) => state.flights
+  );
+
+  const [filters, setFilters] = useState({
+    search: "",
+    sortBy: "price-asc",
+    priceRange: "all",
+    airline: "all",
+  });
 
   useEffect(() => {
-    const fetchFlights = async () => {
-      try {
-        const data = await flightsApi.getAllFlights();
-        setFlights(data);
-        setError(null);
-      } catch (err) {
-        setError("Помилка при завантаженні рейсів");
-        console.error("Error fetching flights:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    dispatch(fetchFlights());
+  }, [dispatch]);
 
-    fetchFlights();
-  }, []);
+  const handleFilterChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+  };
+
+  const filteredFlights = flights.filter((flight) => {
+    // Фільтрація за пошуком
+    const searchLower = filters.search.toLowerCase();
+    const matchesSearch =
+      !filters.search ||
+      flight.airline.toLowerCase().includes(searchLower) ||
+      flight.departureCity.toLowerCase().includes(searchLower) ||
+      flight.arrivalCity.toLowerCase().includes(searchLower);
+
+    // Фільтрація за авіакомпанією
+    const matchesAirline =
+      filters.airline === "all" || flight.airline === filters.airline;
+
+    // Фільтрація за ціновим діапазоном
+    const prices = flights.map((f) => f.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    let matchesPriceRange = true;
+
+    switch (filters.priceRange) {
+      case "budget":
+        matchesPriceRange = flight.price <= minPrice + 500;
+        break;
+      case "medium":
+        matchesPriceRange =
+          flight.price > minPrice + 500 && flight.price < maxPrice - 500;
+        break;
+      case "premium":
+        matchesPriceRange = flight.price >= maxPrice - 500;
+        break;
+    }
+
+    return matchesSearch && matchesAirline && matchesPriceRange;
+  });
+
+  // Сортування рейсів
+  const sortedFlights = [...filteredFlights].sort((a, b) => {
+    switch (filters.sortBy) {
+      case "price-asc":
+        return a.price - b.price;
+      case "price-desc":
+        return b.price - a.price;
+      case "time-asc":
+        return (
+          new Date(a.departureTime).getTime() -
+          new Date(b.departureTime).getTime()
+        );
+      case "time-desc":
+        return (
+          new Date(b.departureTime).getTime() -
+          new Date(a.departureTime).getTime()
+        );
+      default:
+        return 0;
+    }
+  });
 
   if (loading) {
     return (
-      <Container sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+        }}
+      >
         <CircularProgress />
-      </Container>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Container sx={{ mt: 4 }}>
+      <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container sx={{ py: 4 }}>
+    <Box sx={{ p: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Доступні рейси
       </Typography>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {flights.map((flight) => (
-          <FlightCard key={flight.id} flight={flight} />
-        ))}
-      </Box>
-    </Container>
+
+      <FlightFilters
+        flights={flights}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+      />
+
+      {sortedFlights.length === 0 ? (
+        <Alert severity="info">Рейсів не знайдено</Alert>
+      ) : (
+        <Grid container spacing={3}>
+          {sortedFlights.map((flight) => (
+            <Grid item xs={12} sm={6} md={4} key={flight.id}>
+              <FlightCard flight={flight} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Box>
   );
 };
