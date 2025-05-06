@@ -25,11 +25,7 @@ export const FlightDetailsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Генерація сітки місць
-  const generateSeats = (): {
-    row: number;
-    seat: string;
-    isOccupied: boolean;
-  }[][] => {
+  const generateSeats = () => {
     const rows = 10;
     const seatsPerRow = 6;
     const seatLetters = ["A", "B", "C", "D", "E", "F"];
@@ -151,7 +147,7 @@ export const FlightDetailsPage = () => {
         Виберіть місце
       </Typography>
 
-      <SeatGrid flight={flight} />
+      <SeatGrid flight={flight} seats={seats} />
     </Box>
   );
 };
