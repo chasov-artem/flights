@@ -5,8 +5,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  SelectChangeEvent,
 } from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import type { Flight } from "../types";
 
 interface FlightFiltersProps {
