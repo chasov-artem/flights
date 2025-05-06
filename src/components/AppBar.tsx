@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { RootState } from "../types";
+import type { RootState } from "../types";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 export const AppBar = () => {
