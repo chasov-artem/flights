@@ -1,5 +1,5 @@
-import { Card, CardContent, Typography, Grid, IconButton } from "@mui/material";
-import { Flight } from "../types";
+import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
+import type { Flight } from "../types";
 import { useNavigate } from "react-router-dom";
 import InfoIcon from "@mui/icons-material/Info";
 
@@ -21,8 +21,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({ flight }) => {
       onClick={() => navigate(`/flights/${flight.id}`)}
     >
       <CardContent>
-        <Grid container spacing={2}>
-          <Grid item xs={11}>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ flex: 1 }}>
             <Typography variant="h6" component="div">
               {flight.airline}
             </Typography>
@@ -42,8 +42,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({ flight }) => {
             <Typography variant="body2">
               Місць: {flight.remainingSeats}/{flight.totalSeats}
             </Typography>
-          </Grid>
-          <Grid item xs={1}>
+          </Box>
+          <Box>
             <IconButton
               onClick={(e) => {
                 e.stopPropagation();
@@ -52,8 +52,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({ flight }) => {
             >
               <InfoIcon />
             </IconButton>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );

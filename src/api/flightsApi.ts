@@ -1,16 +1,71 @@
-import axios from "axios";
-import { Flight } from "../types";
+import type { Flight } from "../types";
 
-const BASE_URL = "https://679d13f487618946e6544ccc.mockapi.io/testove/v1";
-
+// Імітація API для роботи з рейсами
 export const flightsApi = {
+  // Отримання всіх рейсів
   getAllFlights: async (): Promise<Flight[]> => {
-    const response = await axios.get(`${BASE_URL}/flights`);
-    return response.data;
+    // Імітація затримки мережі
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Приклад даних
+    return [
+      {
+        id: "1",
+        airline: "Ukraine International Airlines",
+        from: "Київ",
+        to: "Львів",
+        departureTime: "2024-03-20T10:00:00",
+        arrivalTime: "2024-03-20T11:30:00",
+        terminal: "D",
+        gate: "12",
+        price: 2500,
+        totalSeats: 180,
+        remainingSeats: 150,
+      },
+      {
+        id: "2",
+        airline: "Windrose",
+        from: "Київ",
+        to: "Одеса",
+        departureTime: "2024-03-20T14:00:00",
+        arrivalTime: "2024-03-20T15:30:00",
+        terminal: "B",
+        gate: "8",
+        price: 2200,
+        totalSeats: 150,
+        remainingSeats: 120,
+      },
+      {
+        id: "3",
+        airline: "SkyUp",
+        from: "Київ",
+        to: "Харків",
+        departureTime: "2024-03-20T16:00:00",
+        arrivalTime: "2024-03-20T17:30:00",
+        terminal: "A",
+        gate: "5",
+        price: 2000,
+        totalSeats: 180,
+        remainingSeats: 100,
+      },
+    ];
   },
 
+  // Отримання рейсу за ID
   getFlightById: async (id: string): Promise<Flight> => {
-    const response = await axios.get(`${BASE_URL}/flights/${id}`);
-    return response.data;
+    // Імітація затримки мережі
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Отримання всіх рейсів
+    const flights = await flightsApi.getAllFlights();
+
+    // Пошук рейсу за ID
+    const flight = flights.find((f) => f.id === id);
+
+    if (!flight) {
+      throw new Error("Рейс не знайдено");
+    }
+
+    return flight;
   },
 };
