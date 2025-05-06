@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Typography, CircularProgress, Alert } from "@mui/material";
+import { Box, Typography, Alert } from "@mui/material";
 import { fetchFlights } from "../redux/flightsSlice";
 import type { AppDispatch, RootState } from "../redux/store";
 import { FlightCard } from "../components/FlightCard";
 import { FlightFilters } from "../components/FlightFilters";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export const FlightsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -85,24 +86,18 @@ export const FlightsPage: React.FC = () => {
   });
 
   if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "60vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner message="Завантаження рейсів..." />;
   }
 
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Alert severity="info">
+          Спробуйте оновити сторінку або перевірте підключення до інтернету
+        </Alert>
       </Box>
     );
   }
