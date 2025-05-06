@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import {
   Container,
-  Grid,
+  Box,
   Typography,
   CircularProgress,
   Alert,
 } from "@mui/material";
 import { FlightCard } from "../components/FlightCard";
-import { Flight } from "../types";
+import type { Flight } from "../types";
 import { flightsApi } from "../api/flightsApi";
 
 export const FlightsPage = () => {
@@ -53,13 +53,11 @@ export const FlightsPage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Доступні рейси
       </Typography>
-      <Grid container spacing={3}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {flights.map((flight) => (
-          <Grid item xs={12} key={flight.id}>
-            <FlightCard flight={flight} />
-          </Grid>
+          <FlightCard key={flight.id} flight={flight} />
         ))}
-      </Grid>
+      </Box>
     </Container>
   );
 };

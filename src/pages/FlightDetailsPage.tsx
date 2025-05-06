@@ -6,9 +6,9 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Grid,
+  Box,
 } from "@mui/material";
-import { Flight } from "../types";
+import type { Flight } from "../types";
 import { flightsApi } from "../api/flightsApi";
 import { SeatGrid } from "../components/SeatGrid";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -90,8 +90,14 @@ export const FlightDetailsPage = () => {
         Рейс {flight.airline}
       </Typography>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          gap: 3,
+        }}
+      >
+        <Box sx={{ flex: 1 }}>
           <Typography variant="h6" gutterBottom>
             Інформація про рейс
           </Typography>
@@ -106,15 +112,15 @@ export const FlightDetailsPage = () => {
           <Typography>Термінал: {flight.terminal}</Typography>
           <Typography>Ворота: {flight.gate}</Typography>
           <Typography>Ціна: {flight.price} грн</Typography>
-        </Grid>
+        </Box>
 
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: 1 }}>
           <Typography variant="h6" gutterBottom>
             Вибір місця
           </Typography>
           <SeatGrid seats={seats} flight={flight} />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Container>
   );
 };
