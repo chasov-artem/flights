@@ -4,6 +4,7 @@ import { store } from "./redux/store";
 import { AppBar } from "./components/AppBar";
 import { FlightsPage } from "./pages/FlightsPage";
 import { FlightDetailsPage } from "./pages/FlightDetailsPage";
+import { CartPage } from "./pages/CartPage";
 import { CssBaseline, Container } from "@mui/material";
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
           <Routes>
             <Route path="/" element={<FlightsPage />} />
             <Route path="/flights/:id" element={<FlightDetailsPage />} />
-            {/* Cart route will be added later */}
+            <Route path="/cart" element={<CartPage />} />
           </Routes>
         </Container>
       </Router>
