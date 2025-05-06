@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Typography, Grid, CircularProgress, Alert } from "@mui/material";
+import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 import { fetchFlights } from "../redux/flightsSlice";
 import type { AppDispatch, RootState } from "../redux/store";
-import type { Flight } from "../types";
 import { FlightCard } from "../components/FlightCard";
 import { FlightFilters } from "../components/FlightFilters";
 
@@ -34,8 +33,8 @@ export const FlightsPage: React.FC = () => {
     const matchesSearch =
       !filters.search ||
       flight.airline.toLowerCase().includes(searchLower) ||
-      flight.departureCity.toLowerCase().includes(searchLower) ||
-      flight.arrivalCity.toLowerCase().includes(searchLower);
+      flight.from.toLowerCase().includes(searchLower) ||
+      flight.to.toLowerCase().includes(searchLower);
 
     // Фільтрація за авіакомпанією
     const matchesAirline =
@@ -123,13 +122,23 @@ export const FlightsPage: React.FC = () => {
       {sortedFlights.length === 0 ? (
         <Alert severity="info">Рейсів не знайдено</Alert>
       ) : (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+            },
+            gap: 3,
+          }}
+        >
           {sortedFlights.map((flight) => (
-            <Grid item xs={12} sm={6} md={4} key={flight.id}>
+            <Box key={flight.id}>
               <FlightCard flight={flight} />
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
     </Box>
   );
