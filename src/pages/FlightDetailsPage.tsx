@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Container,
+  Box,
   Typography,
+  Paper,
   Button,
   CircularProgress,
   Alert,
-  Box,
 } from "@mui/material";
 import type { Flight } from "../types";
 import { flightsApi } from "../api/flightsApi";
 import { SeatGrid } from "../components/SeatGrid";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 
 export const FlightDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +54,7 @@ export const FlightDetailsPage = () => {
         setFlight(data);
         setError(null);
       } catch (err) {
-        setError("Помилка при завантаженні деталей рейсу");
+        setError("Помилка при завантаженні даних рейсу");
         console.error("Error fetching flight:", err);
       } finally {
         setLoading(false);
@@ -62,65 +66,92 @@ export const FlightDetailsPage = () => {
 
   if (loading) {
     return (
-      <Container sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+        }}
+      >
         <CircularProgress />
-      </Container>
+      </Box>
     );
   }
 
   if (error || !flight) {
     return (
-      <Container sx={{ mt: 4 }}>
+      <Box sx={{ p: 3 }}>
         <Alert severity="error">{error || "Рейс не знайдено"}</Alert>
-      </Container>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/flights")}
+          sx={{ mt: 2 }}
+        >
+          Повернутися до списку рейсів
+        </Button>
+      </Box>
     );
   }
 
   return (
-    <Container sx={{ py: 4 }}>
+    <Box sx={{ p: 3 }}>
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => navigate(-1)}
+        onClick={() => navigate("/flights")}
         sx={{ mb: 3 }}
       >
-        Назад
+        Повернутися до списку рейсів
       </Button>
 
-      <Typography variant="h4" component="h1" gutterBottom>
-        Рейс {flight.airline}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+          <FlightTakeoffIcon color="primary" fontSize="large" />
+          <Typography variant="h4" component="h1">
+            {flight.airline}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <LocationOnIcon color="action" />
+            <Typography variant="h6">
+              {flight.from} → {flight.to}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AccessTimeIcon color="action" />
+            <Typography>
+              Відправлення: {new Date(flight.departureTime).toLocaleString()}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AccessTimeIcon color="action" />
+            <Typography>
+              Прибуття: {new Date(flight.arrivalTime).toLocaleString()}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ConfirmationNumberIcon color="action" />
+            <Typography>
+              Термінал: {flight.terminal}, Ворота: {flight.gate}
+            </Typography>
+          </Box>
+
+          <Typography variant="h6" color="primary" sx={{ mt: 2 }}>
+            Ціна: {flight.price} грн
+          </Typography>
+        </Box>
+      </Paper>
+
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Виберіть місце
       </Typography>
 
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 3,
-        }}
-      >
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h6" gutterBottom>
-            Інформація про рейс
-          </Typography>
-          <Typography>З: {flight.from}</Typography>
-          <Typography>До: {flight.to}</Typography>
-          <Typography>
-            Відправлення: {new Date(flight.departureTime).toLocaleString()}
-          </Typography>
-          <Typography>
-            Прибуття: {new Date(flight.arrivalTime).toLocaleString()}
-          </Typography>
-          <Typography>Термінал: {flight.terminal}</Typography>
-          <Typography>Ворота: {flight.gate}</Typography>
-          <Typography>Ціна: {flight.price} грн</Typography>
-        </Box>
-
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h6" gutterBottom>
-            Вибір місця
-          </Typography>
-          <SeatGrid seats={seats} flight={flight} />
-        </Box>
-      </Box>
-    </Container>
+      <SeatGrid flight={flight} />
+    </Box>
   );
 };

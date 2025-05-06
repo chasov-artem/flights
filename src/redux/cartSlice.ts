@@ -14,14 +14,12 @@ const cartSlice = createSlice({
       state.items.push(action.payload);
       localStorage.setItem("cart", JSON.stringify(state.items));
     },
-    removeFromCart: (state, action: PayloadAction<string>) => {
+    removeFromCart: (state, action: PayloadAction<CartItem>) => {
       state.items = state.items.filter(
         (item) =>
-          !(
-            item.flightId === action.payload.split("-")[0] &&
-            item.seat.row === parseInt(action.payload.split("-")[1]) &&
-            item.seat.seat === action.payload.split("-")[2]
-          )
+          item.flightDetails.id !== action.payload.flightDetails.id ||
+          item.seat.row !== action.payload.seat.row ||
+          item.seat.seat !== action.payload.seat.seat
       );
       localStorage.setItem("cart", JSON.stringify(state.items));
     },

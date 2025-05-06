@@ -1,106 +1,160 @@
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
-  Container,
-  Typography,
   Box,
-  Card,
-  CardContent,
-  IconButton,
+  Typography,
+  Paper,
   Button,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
   Divider,
+  Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import type { RootState } from "../types";
 import { removeFromCart, clearCart } from "../redux/cartSlice";
 
 export const CartPage = () => {
-  const dispatch = useDispatch();
   const cartItems = useSelector((state: RootState) => state.cart.items);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
-
-  const handleRemoveItem = (flightId: string, row: number, seat: string) => {
-    dispatch(removeFromCart(`${flightId}-${row}-${seat}`));
-  };
-
-  const handleClearCart = () => {
-    dispatch(clearCart());
-  };
+  const totalPrice = cartItems.reduce(
+    (sum, item) => sum + item.flightDetails.price,
+    0
+  );
 
   if (cartItems.length === 0) {
     return (
-      <Container sx={{ py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Корзина порожня
-        </Typography>
-        <Typography color="text.secondary">
-          Додайте квитки, щоб вони з'явились у корзині
-        </Typography>
-      </Container>
+      <Box sx={{ p: 3 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/flights")}
+          sx={{ mb: 3 }}
+        >
+          Повернутися до списку рейсів
+        </Button>
+
+        <Paper sx={{ p: 3, textAlign: "center" }}>
+          <ShoppingCartIcon
+            sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
+          />
+          <Typography variant="h5" gutterBottom>
+            Ваш кошик порожній
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Додайте квитки до кошика, щоб продовжити покупку
+          </Typography>
+          <Button variant="contained" onClick={() => navigate("/flights")}>
+            Перейти до списку рейсів
+          </Button>
+        </Paper>
+      </Box>
     );
   }
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Корзина
-      </Typography>
-
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {cartItems.map((item) => (
-          <Card key={`${item.flightId}-${item.seat.row}-${item.seat.seat}`}>
-            <CardContent>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Box>
-                  <Typography variant="h6">
-                    {item.flightDetails.airline}
-                  </Typography>
-                  <Typography color="text.secondary">
-                    {item.flightDetails.from} → {item.flightDetails.to}
-                  </Typography>
-                  <Typography>
-                    Місце: {item.seat.row} ряд, {item.seat.seat}
-                  </Typography>
-                  <Typography>Ціна: {item.price} грн</Typography>
-                </Box>
-                <IconButton
-                  color="error"
-                  onClick={() =>
-                    handleRemoveItem(
-                      item.flightId,
-                      item.seat.row,
-                      item.seat.seat
-                    )
-                  }
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
-
-      <Divider sx={{ my: 3 }} />
-
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+    <Box sx={{ p: 3 }}>
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={() => navigate("/flights")}
+        sx={{ mb: 3 }}
       >
-        <Typography variant="h6">Загальна сума: {totalPrice} грн</Typography>
-        <Button variant="outlined" color="error" onClick={handleClearCart}>
-          Очистити корзину
-        </Button>
-      </Box>
-    </Container>
+        Повернутися до списку рейсів
+      </Button>
+
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+          <ShoppingCartIcon color="primary" fontSize="large" />
+          <Typography variant="h4" component="h1">
+            Кошик
+          </Typography>
+        </Box>
+
+        <List>
+          {cartItems.map((item, index) => (
+            <Box
+              key={`${item.flightDetails.id}-${item.seat.row}-${item.seat.seat}`}
+            >
+              <ListItem
+                secondaryAction={
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={() => dispatch(removeFromCart(item))}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                }
+              >
+                <ListItemText
+                  primary={
+                    <Typography variant="h6">
+                      {item.flightDetails.airline}
+                    </Typography>
+                  }
+                  secondary={
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="body1">
+                        {item.flightDetails.from} → {item.flightDetails.to}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Ряд {item.seat.row}, Місце {item.seat.seat}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="primary"
+                        sx={{ mt: 1 }}
+                      >
+                        {item.flightDetails.price} грн
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </ListItem>
+              {index < cartItems.length - 1 && <Divider />}
+            </Box>
+          ))}
+        </List>
+
+        <Box
+          sx={{ mt: 3, p: 2, bgcolor: "background.default", borderRadius: 1 }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Загальна сума: {totalPrice} грн
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}
+        >
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => dispatch(clearCart())}
+          >
+            Очистити кошик
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              // TODO: Implement checkout
+              alert("Функція оформлення замовлення буде реалізована пізніше");
+            }}
+          >
+            Оформити замовлення
+          </Button>
+        </Box>
+      </Paper>
+
+      <Alert severity="info" sx={{ mt: 2 }}>
+        Після оформлення замовлення ви отримаєте підтвердження на вашу
+        електронну пошту
+      </Alert>
+    </Box>
   );
 };
