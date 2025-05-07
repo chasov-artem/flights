@@ -4,46 +4,97 @@ import {
   Container,
   Typography,
   Box,
-  Paper,
   Button,
-  Divider,
   IconButton,
   Alert,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Paper,
+  Divider,
 } from "@mui/material";
 import {
-  Delete as DeleteIcon,
-  ArrowBack as ArrowBackIcon,
+  Delete,
+  ArrowBack,
   FlightTakeoff,
   FlightLand,
   EventSeat,
+  DeleteSweep,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
+import { removeFromCart, clearCart } from "../redux/cartSlice";
 import type { RootState, AppDispatch } from "../redux/store";
-import { removeFromCart } from "../redux/cartSlice";
-import { ConfirmationModal } from "../components/ConfirmationModal";
+import { Notification } from "../components/Notification";
 
 export const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const cartItems = useSelector((state: RootState) => state.cart.items);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{
     flightId: string;
     seatId: string;
   } | null>(null);
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
-  const handleRemoveFromCart = (flightId: string, seatId: string) => {
-    setItemToDelete({ flightId, seatId });
+  const handleBackClick = () => {
+    navigate("/");
   };
 
-  const handleConfirmDelete = () => {
+  const handleDeleteClick = (flightId: string, seatId: string) => {
+    setItemToDelete({ flightId, seatId });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
     if (itemToDelete) {
       dispatch(removeFromCart(itemToDelete));
-      setItemToDelete(null);
+      setNotification({
+        open: true,
+        message: "Квиток видалено з корзини",
+        severity: "success",
+      });
     }
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
   };
 
-  const handleCancelDelete = () => {
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
     setItemToDelete(null);
+  };
+
+  const handleDeleteAllClick = () => {
+    setDeleteAllDialogOpen(true);
+  };
+
+  const handleDeleteAllConfirm = () => {
+    dispatch(clearCart());
+    setNotification({
+      open: true,
+      message: "Всі квитки видалено з корзини",
+      severity: "success",
+    });
+    setDeleteAllDialogOpen(false);
+  };
+
+  const handleDeleteAllCancel = () => {
+    setDeleteAllDialogOpen(false);
+  };
+
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
@@ -53,8 +104,8 @@ export const CartPage = () => {
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         <Button
           variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/")}
+          startIcon={<ArrowBack />}
+          onClick={handleBackClick}
           sx={{ mb: 2 }}
         >
           Повернутися до списку рейсів
@@ -68,8 +119,8 @@ export const CartPage = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Button
         variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate("/")}
+        startIcon={<ArrowBack />}
+        onClick={handleBackClick}
         sx={{ mb: 2 }}
       >
         Повернутися до списку рейсів
@@ -126,14 +177,16 @@ export const CartPage = () => {
                 <Typography variant="h6" color="primary">
                   ${item.price}
                 </Typography>
-                <IconButton
-                  color="error"
-                  onClick={() =>
-                    handleRemoveFromCart(item.flightId, item.seatId)
-                  }
-                >
-                  <DeleteIcon />
-                </IconButton>
+                <Tooltip title="Видалити з корзини">
+                  <IconButton
+                    color="error"
+                    onClick={() =>
+                      handleDeleteClick(item.flightId, item.seatId)
+                    }
+                  >
+                    <Delete />
+                  </IconButton>
+                </Tooltip>
               </Box>
             </Box>
           </Paper>
@@ -155,25 +208,80 @@ export const CartPage = () => {
         </Typography>
       </Box>
 
-      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
+      <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
+        <Button
+          variant="outlined"
+          color="error"
+          size="large"
+          startIcon={<DeleteSweep />}
+          onClick={handleDeleteAllClick}
+        >
+          Видалити все
+        </Button>
         <Button
           variant="contained"
           color="primary"
           size="large"
           onClick={() => {
-            alert("Замовлення оформлено!");
+            setNotification({
+              open: true,
+              message:
+                "Вибачте, сервіс тимчасово не працює. Спробуйте пізніше.",
+              severity: "info",
+            });
           }}
         >
           Оформити замовлення
         </Button>
       </Box>
 
-      <ConfirmationModal
-        open={!!itemToDelete}
-        title="Видалення квитка"
-        message="Ви впевнені, що хочете видалити цей квиток з корзини?"
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Підтвердження видалення
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Ви впевнені, що хочете видалити цей квиток з корзини?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Скасувати</Button>
+          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+            Видалити
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteAllDialogOpen}
+        onClose={handleDeleteAllCancel}
+        aria-labelledby="delete-all-dialog-title"
+      >
+        <DialogTitle id="delete-all-dialog-title">
+          Підтвердження видалення всіх квитків
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Ви впевнені, що хочете видалити всі квитки з корзини?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteAllCancel}>Скасувати</Button>
+          <Button onClick={handleDeleteAllConfirm} color="error" autoFocus>
+            Видалити все
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Notification
+        open={notification.open}
+        message={notification.message}
+        severity={notification.severity}
+        onClose={handleCloseNotification}
       />
     </Container>
   );

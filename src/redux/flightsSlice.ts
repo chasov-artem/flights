@@ -19,16 +19,27 @@ const initialState: FlightsState = {
 export const fetchFlights = createAsyncThunk(
   "flights/fetchFlights",
   async () => {
-    const response = await flightsApi.getAllFlights();
-    return response;
+    try {
+      const response = await flightsApi.getAllFlights();
+      return response;
+    } catch (error) {
+      console.error("Error fetching flights:", error);
+      throw error;
+    }
   }
 );
 
 export const fetchFlightById = createAsyncThunk(
   "flights/fetchFlightById",
   async (id: string) => {
-    const response = await flightsApi.getFlightById(id);
-    return response;
+    try {
+      const response = await flightsApi.getFlightById(id);
+
+      return response;
+    } catch (error) {
+      console.error("Error fetching flight by ID:", error);
+      throw error;
+    }
   }
 );
 
@@ -49,6 +60,7 @@ const flightsSlice = createSlice({
       .addCase(fetchFlights.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Помилка при завантаженні рейсів";
+        console.error("Flights fetch rejected:", action.error);
       })
       .addCase(fetchFlightById.pending, (state) => {
         state.loading = true;
@@ -61,6 +73,7 @@ const flightsSlice = createSlice({
       .addCase(fetchFlightById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Помилка при завантаженні рейсу";
+        console.error("Flight fetch rejected:", action.error);
       });
   },
 });
