@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
-  Grid,
   Card,
   CardContent,
   Typography,
@@ -13,11 +12,13 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
+  Button,
 } from "@mui/material";
-import { Favorite, FavoriteBorder } from "@mui/icons-material";
+import { Favorite, FavoriteBorder, ShoppingCart } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchFlights } from "../redux/flightsSlice";
 import type { RootState, AppDispatch } from "../redux/store";
+import { Notification } from "../components/Notification";
 
 type SortOption = "price-asc" | "price-desc" | "time-asc" | "time-desc";
 
@@ -27,8 +28,18 @@ export const FlightsPage = () => {
   const { flights, loading, error } = useSelector(
     (state: RootState) => state.flights
   );
+  const cartItems = useSelector((state: RootState) => state.cart.items);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("price-asc");
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
@@ -48,11 +59,29 @@ export const FlightsPage = () => {
 
   const toggleFavorite = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setFavorites((prev) =>
-      prev.includes(id)
+    setFavorites((prev) => {
+      const newFavorites = prev.includes(id)
         ? prev.filter((favoriteId) => favoriteId !== id)
-        : [...prev, id]
-    );
+        : [...prev, id];
+
+      setNotification({
+        open: true,
+        message: prev.includes(id)
+          ? "Рейс видалено з обраного"
+          : "Рейс додано до обраного",
+        severity: "success",
+      });
+
+      return newFavorites;
+    });
+  };
+
+  const handleCartClick = () => {
+    navigate("/cart");
+  };
+
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   const filteredAndSortedFlights = flights
@@ -108,35 +137,60 @@ export const FlightsPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Grid container spacing={2}>
-          <Box sx={{ width: { xs: "100%", md: "50%" } }}>
-            <TextField
-              fullWidth
-              label="Пошук рейсів"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Введіть авіакомпанію, місто відправлення або прибуття"
-            />
+      <Box
+        sx={{
+          mb: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box sx={{ flex: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 2,
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <TextField
+                fullWidth
+                label="Пошук рейсів"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Введіть авіакомпанію, місто відправлення або прибуття"
+              />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <TextField
+                fullWidth
+                select
+                label="Сортування"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+              >
+                <MenuItem value="price-asc">Ціна (за зростанням)</MenuItem>
+                <MenuItem value="price-desc">Ціна (за спаданням)</MenuItem>
+                <MenuItem value="time-asc">Час (за зростанням)</MenuItem>
+                <MenuItem value="time-desc">Час (за спаданням)</MenuItem>
+              </TextField>
+            </Box>
           </Box>
-          <Box sx={{ width: { xs: "100%", md: "50%" } }}>
-            <TextField
-              fullWidth
-              select
-              label="Сортування"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-            >
-              <MenuItem value="price-asc">Ціна (за зростанням)</MenuItem>
-              <MenuItem value="price-desc">Ціна (за спаданням)</MenuItem>
-              <MenuItem value="time-asc">Час (за зростанням)</MenuItem>
-              <MenuItem value="time-desc">Час (за спаданням)</MenuItem>
-            </TextField>
-          </Box>
-        </Grid>
+        </Box>
+
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<ShoppingCart />}
+          onClick={handleCartClick}
+          sx={{ ml: 2 }}
+        >
+          Корзина ({cartItems.length})
+        </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
         {filteredAndSortedFlights.map((flight) => (
           <Box
             key={flight.id}
@@ -190,7 +244,7 @@ export const FlightsPage = () => {
                   </Tooltip>
                 </Box>
 
-                <Typography color="text.secondary" gutterBottom>
+                <Typography variant="body1" gutterBottom>
                   {flight.from} → {flight.to}
                 </Typography>
 
@@ -215,7 +269,14 @@ export const FlightsPage = () => {
             </Card>
           </Box>
         ))}
-      </Grid>
+      </Box>
+
+      <Notification
+        open={notification.open}
+        message={notification.message}
+        severity={notification.severity}
+        onClose={handleCloseNotification}
+      />
     </Container>
   );
 };

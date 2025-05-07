@@ -1,6 +1,20 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import type { CartState, CartItem } from "../types";
+
+export interface CartItem {
+  flightId: string;
+  seatId: string;
+  price: number;
+  airline: string;
+  from: string;
+  to: string;
+  departureTime: string;
+  arrivalTime: string;
+}
+
+interface CartState {
+  items: CartItem[];
+}
 
 const initialState: CartState = {
   items: JSON.parse(localStorage.getItem("cart") || "[]"),
@@ -14,12 +28,16 @@ const cartSlice = createSlice({
       state.items.push(action.payload);
       localStorage.setItem("cart", JSON.stringify(state.items));
     },
-    removeFromCart: (state, action: PayloadAction<CartItem>) => {
+    removeFromCart: (
+      state,
+      action: PayloadAction<{ flightId: string; seatId: string }>
+    ) => {
       state.items = state.items.filter(
         (item) =>
-          item.flightDetails.id !== action.payload.flightDetails.id ||
-          item.seat.row !== action.payload.seat.row ||
-          item.seat.seat !== action.payload.seat.seat
+          !(
+            item.flightId === action.payload.flightId &&
+            item.seatId === action.payload.seatId
+          )
       );
       localStorage.setItem("cart", JSON.stringify(state.items));
     },

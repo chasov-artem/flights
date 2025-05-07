@@ -10,25 +10,38 @@ export interface Flight {
   gate: string;
   totalSeats: number;
   remainingSeats: number;
+  seats: Seat[];
 }
 
 export interface Seat {
-  row: number;
-  seat: string; // A-F
-  isOccupied: boolean;
+  id: string;
+  number: string;
+  isAvailable: boolean;
 }
 
 export interface CartItem {
   flightId: string;
-  seat: Seat;
+  seatId: string;
+  airline: string;
+  from: string;
+  to: string;
+  departureTime: string;
+  arrivalTime: string;
   price: number;
-  flightDetails: Flight;
 }
 
 export interface RootState {
   cart: CartState;
+  flights: FlightsState;
 }
 
 export interface CartState {
   items: CartItem[];
+}
+
+export interface FlightsState {
+  flights: Flight[];
+  selectedFlight: Flight | null;
+  loading: boolean;
+  error: string | null;
 }
