@@ -1,140 +1,221 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  CircularProgress,
+  Alert,
+  TextField,
+  MenuItem,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import { Favorite, FavoriteBorder } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Typography, Alert } from "@mui/material";
 import { fetchFlights } from "../redux/flightsSlice";
-import type { AppDispatch, RootState } from "../redux/store";
-import { FlightCard } from "../components/FlightCard";
-import { FlightFilters } from "../components/FlightFilters";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import type { RootState, AppDispatch } from "../redux/store";
 
-export const FlightsPage: React.FC = () => {
+type SortOption = "price-asc" | "price-desc" | "time-asc" | "time-desc";
+
+export const FlightsPage = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { flights, loading, error } = useSelector(
     (state: RootState) => state.flights
   );
-
-  const [filters, setFilters] = useState({
-    search: "",
-    sortBy: "price-asc",
-    priceRange: "all",
-    airline: "all",
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("price-asc");
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem("favorites");
+    return saved ? JSON.parse(saved) : [];
   });
 
   useEffect(() => {
     dispatch(fetchFlights());
   }, [dispatch]);
 
-  const handleFilterChange = (newFilters: typeof filters) => {
-    setFilters(newFilters);
+  useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  }, [favorites]);
+
+  const handleFlightClick = (id: string) => {
+    navigate(`/flights/${id}`);
   };
 
-  const filteredFlights = flights.filter((flight) => {
-    // Фільтрація за пошуком
-    const searchLower = filters.search.toLowerCase();
-    const matchesSearch =
-      !filters.search ||
-      flight.airline.toLowerCase().includes(searchLower) ||
-      flight.from.toLowerCase().includes(searchLower) ||
-      flight.to.toLowerCase().includes(searchLower);
+  const toggleFavorite = (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setFavorites((prev) =>
+      prev.includes(id)
+        ? prev.filter((favoriteId) => favoriteId !== id)
+        : [...prev, id]
+    );
+  };
 
-    // Фільтрація за авіакомпанією
-    const matchesAirline =
-      filters.airline === "all" || flight.airline === filters.airline;
-
-    // Фільтрація за ціновим діапазоном
-    const prices = flights.map((f) => f.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    let matchesPriceRange = true;
-
-    switch (filters.priceRange) {
-      case "budget":
-        matchesPriceRange = flight.price <= minPrice + 500;
-        break;
-      case "medium":
-        matchesPriceRange =
-          flight.price > minPrice + 500 && flight.price < maxPrice - 500;
-        break;
-      case "premium":
-        matchesPriceRange = flight.price >= maxPrice - 500;
-        break;
-    }
-
-    return matchesSearch && matchesAirline && matchesPriceRange;
-  });
-
-  // Сортування рейсів
-  const sortedFlights = [...filteredFlights].sort((a, b) => {
-    switch (filters.sortBy) {
-      case "price-asc":
-        return a.price - b.price;
-      case "price-desc":
-        return b.price - a.price;
-      case "time-asc":
-        return (
-          new Date(a.departureTime).getTime() -
-          new Date(b.departureTime).getTime()
-        );
-      case "time-desc":
-        return (
-          new Date(b.departureTime).getTime() -
-          new Date(a.departureTime).getTime()
-        );
-      default:
-        return 0;
-    }
-  });
+  const filteredAndSortedFlights = flights
+    .filter((flight) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        flight.airline.toLowerCase().includes(searchLower) ||
+        flight.from.toLowerCase().includes(searchLower) ||
+        flight.to.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "price-asc":
+          return a.price - b.price;
+        case "price-desc":
+          return b.price - a.price;
+        case "time-asc":
+          return (
+            new Date(a.departureTime).getTime() -
+            new Date(b.departureTime).getTime()
+          );
+        case "time-desc":
+          return (
+            new Date(b.departureTime).getTime() -
+            new Date(a.departureTime).getTime()
+          );
+        default:
+          return 0;
+      }
+    });
 
   if (loading) {
-    return <LoadingSpinner message="Завантаження рейсів..." />;
-  }
-
-  if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-        <Alert severity="info">
-          Спробуйте оновити сторінку або перевірте підключення до інтернету
-        </Alert>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
+        <CircularProgress />
       </Box>
     );
   }
 
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Доступні рейси
-      </Typography>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Box sx={{ mb: 4 }}>
+        <Grid container spacing={2}>
+          <Box sx={{ width: { xs: "100%", md: "50%" } }}>
+            <TextField
+              fullWidth
+              label="Пошук рейсів"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Введіть авіакомпанію, місто відправлення або прибуття"
+            />
+          </Box>
+          <Box sx={{ width: { xs: "100%", md: "50%" } }}>
+            <TextField
+              fullWidth
+              select
+              label="Сортування"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+            >
+              <MenuItem value="price-asc">Ціна (за зростанням)</MenuItem>
+              <MenuItem value="price-desc">Ціна (за спаданням)</MenuItem>
+              <MenuItem value="time-asc">Час (за зростанням)</MenuItem>
+              <MenuItem value="time-desc">Час (за спаданням)</MenuItem>
+            </TextField>
+          </Box>
+        </Grid>
+      </Box>
 
-      <FlightFilters
-        flights={flights}
-        filters={filters}
-        onFilterChange={handleFilterChange}
-      />
+      <Grid container spacing={3}>
+        {filteredAndSortedFlights.map((flight) => (
+          <Box
+            key={flight.id}
+            sx={{
+              width: {
+                xs: "100%",
+                sm: "calc(50% - 12px)",
+                md: "calc(33.33% - 16px)",
+              },
+            }}
+          >
+            <Card
+              sx={{
+                cursor: "pointer",
+                transition: "transform 0.2s",
+                "&:hover": {
+                  transform: "scale(1.02)",
+                },
+              }}
+              onClick={() => handleFlightClick(flight.id)}
+            >
+              <CardContent>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6" component="div">
+                    {flight.airline}
+                  </Typography>
+                  <Tooltip
+                    title={
+                      favorites.includes(flight.id)
+                        ? "Видалити з обраного"
+                        : "Додати до обраного"
+                    }
+                  >
+                    <IconButton
+                      onClick={(e) => toggleFavorite(flight.id, e)}
+                      color="primary"
+                    >
+                      {favorites.includes(flight.id) ? (
+                        <Favorite />
+                      ) : (
+                        <FavoriteBorder />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
 
-      {sortedFlights.length === 0 ? (
-        <Alert severity="info">Рейсів не знайдено</Alert>
-      ) : (
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-            },
-            gap: 3,
-          }}
-        >
-          {sortedFlights.map((flight) => (
-            <Box key={flight.id}>
-              <FlightCard flight={flight} />
-            </Box>
-          ))}
-        </Box>
-      )}
-    </Box>
+                <Typography color="text.secondary" gutterBottom>
+                  {flight.from} → {flight.to}
+                </Typography>
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    Відправлення:{" "}
+                    {new Date(flight.departureTime).toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2">
+                    Прибуття: {new Date(flight.arrivalTime).toLocaleString()}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2">Ціна: ${flight.price}</Typography>
+                  <Typography variant="body2">
+                    Доступні місця: {flight.remainingSeats} з{" "}
+                    {flight.totalSeats}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        ))}
+      </Grid>
+    </Container>
   );
 };
