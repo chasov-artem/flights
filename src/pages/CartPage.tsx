@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -19,14 +20,30 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../redux/store";
 import { removeFromCart } from "../redux/cartSlice";
+import { ConfirmationModal } from "../components/ConfirmationModal";
 
 export const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const cartItems = useSelector((state: RootState) => state.cart.items);
+  const [itemToDelete, setItemToDelete] = useState<{
+    flightId: string;
+    seatId: string;
+  } | null>(null);
 
   const handleRemoveFromCart = (flightId: string, seatId: string) => {
-    dispatch(removeFromCart({ flightId, seatId }));
+    setItemToDelete({ flightId, seatId });
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      dispatch(removeFromCart(itemToDelete));
+      setItemToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setItemToDelete(null);
   };
 
   const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
@@ -144,13 +161,20 @@ export const CartPage = () => {
           color="primary"
           size="large"
           onClick={() => {
-            // Тут можна додати логіку оформлення замовлення
             alert("Замовлення оформлено!");
           }}
         >
           Оформити замовлення
         </Button>
       </Box>
+
+      <ConfirmationModal
+        open={!!itemToDelete}
+        title="Видалення квитка"
+        message="Ви впевнені, що хочете видалити цей квиток з корзини?"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </Container>
   );
 };
