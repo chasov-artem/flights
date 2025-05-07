@@ -21,6 +21,11 @@ export const flightsApi = {
         price: 2500,
         totalSeats: 180,
         remainingSeats: 150,
+        seats: Array.from({ length: 180 }, (_, i) => ({
+          id: `${i + 1}`,
+          number: `${i + 1}`,
+          isAvailable: i < 150,
+        })),
       },
       {
         id: "2",
@@ -34,6 +39,11 @@ export const flightsApi = {
         price: 2200,
         totalSeats: 150,
         remainingSeats: 120,
+        seats: Array.from({ length: 150 }, (_, i) => ({
+          id: `${i + 1}`,
+          number: `${i + 1}`,
+          isAvailable: i < 120,
+        })),
       },
       {
         id: "3",
@@ -47,6 +57,11 @@ export const flightsApi = {
         price: 2000,
         totalSeats: 180,
         remainingSeats: 100,
+        seats: Array.from({ length: 180 }, (_, i) => ({
+          id: `${i + 1}`,
+          number: `${i + 1}`,
+          isAvailable: i < 100,
+        })),
       },
     ];
   },

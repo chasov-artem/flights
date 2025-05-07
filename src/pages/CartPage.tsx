@@ -1,137 +1,129 @@
-import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
-  Box,
+  Container,
   Typography,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
+  Box,
   Paper,
+  Button,
   Divider,
+  IconButton,
+  Alert,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { removeFromCart, clearCart } from "../redux/cartSlice";
-import type { RootState } from "../redux/store";
+import {
+  Delete as DeleteIcon,
+  ArrowBack as ArrowBackIcon,
+  FlightTakeoff,
+  FlightLand,
+  EventSeat,
+} from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../redux/store";
+import { removeFromCart } from "../redux/cartSlice";
 
-export const CartPage: React.FC = () => {
+export const CartPage = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const cartItems = useSelector((state: RootState) => state.cart.items);
 
-  const handleRemoveItem = (item: (typeof cartItems)[0]) => {
-    dispatch(removeFromCart(item));
+  const handleRemoveFromCart = (flightId: string, seatId: string) => {
+    dispatch(removeFromCart({ flightId, seatId }));
   };
 
-  const handleClearCart = () => {
-    dispatch(clearCart());
-  };
-
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
 
   if (cartItems.length === 0) {
     return (
-      <Box sx={{ p: 3, textAlign: "center" }}>
-        <ShoppingCartIcon
-          sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
-        />
-        <Typography variant="h5" gutterBottom>
-          Ваш кошик порожній
-        </Typography>
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
         <Button
-          variant="contained"
+          variant="outlined"
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/")}
-          sx={{ mt: 2 }}
+          sx={{ mb: 2 }}
         >
-          Повернутися до рейсів
+          Повернутися до списку рейсів
         </Button>
-      </Box>
+        <Alert severity="info">Ваша корзина порожня</Alert>
+      </Container>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Кошик
-        </Typography>
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={handleClearCart}
-          startIcon={<DeleteIcon />}
-        >
-          Очистити кошик
-        </Button>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Button
+        variant="outlined"
+        startIcon={<ArrowBackIcon />}
+        onClick={() => navigate("/")}
+        sx={{ mb: 2 }}
+      >
+        Повернутися до списку рейсів
+      </Button>
+
+      <Typography variant="h4" component="h1" gutterBottom>
+        Корзина
+      </Typography>
+
+      <Box sx={{ display: "grid", gap: 2 }}>
+        {cartItems.map((item) => (
+          <Paper key={`${item.flightId}-${item.seatId}`} sx={{ p: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+              }}
+            >
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h6" gutterBottom>
+                  {item.airline}
+                </Typography>
+
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <FlightTakeoff sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography>
+                    {item.from} -{" "}
+                    {new Date(item.departureTime).toLocaleString()}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <FlightLand sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography>
+                    {item.to} - {new Date(item.arrivalTime).toLocaleString()}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <EventSeat sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography>Місце: {item.seatId}</Typography>
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-end",
+                  gap: 1,
+                }}
+              >
+                <Typography variant="h6" color="primary">
+                  ${item.price}
+                </Typography>
+                <IconButton
+                  color="error"
+                  onClick={() =>
+                    handleRemoveFromCart(item.flightId, item.seatId)
+                  }
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            </Box>
+          </Paper>
+        ))}
       </Box>
 
-      <Paper sx={{ mb: 3 }}>
-        <List>
-          {cartItems.map((item, index) => (
-            <Box
-              key={`${item.flightId}-${item.seat.row}-${item.seat.seat}-${index}`}
-            >
-              <ListItem
-                secondaryAction={
-                  <IconButton
-                    edge="end"
-                    aria-label="delete"
-                    onClick={() => handleRemoveItem(item)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                }
-              >
-                <ListItemText
-                  primary={
-                    <Box>
-                      <Typography variant="h6">
-                        {item.flightDetails.airline}
-                      </Typography>
-                      <Typography variant="body1">
-                        {item.flightDetails.from} → {item.flightDetails.to}
-                      </Typography>
-                    </Box>
-                  }
-                  secondaryTypographyProps={{ component: "div" }}
-                  secondary={
-                    <Box sx={{ mt: 1 }}>
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        Рейс: {item.flightDetails.id}
-                      </Typography>
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ display: "block" }}
-                      >
-                        Місце: {item.seat.row}-{item.seat.seat}
-                      </Typography>
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ display: "block" }}
-                      >
-                        Ціна: {item.price} грн
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </ListItem>
-              {index < cartItems.length - 1 && <Divider />}
-            </Box>
-          ))}
-        </List>
-      </Paper>
+      <Divider sx={{ my: 3 }} />
 
       <Box
         sx={{
@@ -140,19 +132,25 @@ export const CartPage: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h6">Загальна сума: {totalPrice} грн</Typography>
+        <Typography variant="h5">Загальна сума:</Typography>
+        <Typography variant="h5" color="primary">
+          ${totalAmount}
+        </Typography>
+      </Box>
+
+      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
         <Button
           variant="contained"
           color="primary"
           size="large"
           onClick={() => {
-            // Тут буде логіка оформлення замовлення
-            alert("Функція оформлення замовлення буде додана пізніше");
+            // Тут можна додати логіку оформлення замовлення
+            alert("Замовлення оформлено!");
           }}
         >
           Оформити замовлення
         </Button>
       </Box>
-    </Box>
+    </Container>
   );
 };
